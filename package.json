@@ -1,0 +1,23 @@
+{
+  "name": "@mekstuff/localpm",
+  "author": "mekstuff <contact@mekstuff.com> (https://github.com/mekstuff)",
+  "type": "module",
+  "bin": {
+    "lpm": "build/localpm.js"
+  },
+  "devDependencies": {
+    "@types/node": "^20.2.5",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "chokidar": "^3.5.3",
+    "commander": "^10.0.1",
+    "comment-json": "^4.2.3",
+    "console-log-tree": "^1.2.1",
+    "enquirer": "^2.3.6",
+    "listr2": "^6.6.0",
+    "rxjs": "^7.8.1",
+    "tar": "^6.1.15",
+    "tmp": "^0.2.1"
+  }
+}
