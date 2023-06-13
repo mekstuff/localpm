@@ -8,7 +8,7 @@ import { Listr } from "listr2";
 import { program as CommanderProgram } from "commander";
 
 import extractPackageName, { extractedPackageInfo } from "../misc/extractPackageName.js";
-import createHomeFolder, { TwinePackages, getTwinePackageJsonPath, getTwinePkgs } from "../misc/createHomeFolder.js";
+import createHomeFolder, { localpmPackages, getlocalpmPackageJsonPath, getlocalpmPkgs } from "../misc/createHomeFolder.js";
 import { pushaction } from "./push.js";
 
 interface PublishContext {
@@ -69,17 +69,17 @@ export async function publishaction(packagePath:string,options:publishactionopti
                 }
             },
             {
-                title: "Running prepublishTwine scripts",
+                title: "Running prepublishlocalpm scripts",
                 skip: options.noScripts,
                 task: (ctx,task) => {
                     const Scripts = ctx.readPackageFile["scripts"];
                     if(Scripts){
-                        const prepublishTwine = Scripts["prepublishTwine"];
-                        if(prepublishTwine){
-                            const res = execSync(prepublishTwine);
+                        const prepublishlocalpm = Scripts["prepublishlocalpm"];
+                        if(prepublishlocalpm){
+                            const res = execSync(prepublishlocalpm);
                             task.title = task.title + " ==>> " + res.toString();
                         }else{
-                            task.skip(`No "prepublishTwine" script found`)
+                            task.skip(`No "prepublishlocalpm" script found`)
                         }
                     }else{
                         task.skip(`No scripts field in package file`)
@@ -90,7 +90,7 @@ export async function publishaction(packagePath:string,options:publishactionopti
                 title: "Packaging...",
                 task: async (ctx, task) => {
                     await new Promise<void>((resolve,reject) => {
-                        tmp.dir( {prefix: "twine"}, async (err:string | undefined,temppath:string,cleanupcb:()=>void) => {
+                        tmp.dir( {prefix: "localpm"}, async (err:string | undefined,temppath:string,cleanupcb:()=>void) => {
                             if(err){
                                 throw err;
                             }
@@ -107,27 +107,27 @@ export async function publishaction(packagePath:string,options:publishactionopti
                                     reject(`Could not access tarbal ${e}`)
                                 }))[0];
                                 
-                                const twinePkgsPath = getTwinePkgs();
-                                //check for the orginization in twine pkgs. twine/pkgs/@orginization
-                                const orgNameInTwine = ctx.packageinfo.Orginization
-                                const orgPathInTwine = path.join(twinePkgsPath, orgNameInTwine);
+                                const localpmPkgsPath = getlocalpmPkgs();
+                                //check for the orginization in localpm pkgs. localpm/pkgs/@orginization
+                                const orgNameInlocalpm = ctx.packageinfo.Orginization
+                                const orgPathInlocalpm = path.join(localpmPkgsPath, orgNameInlocalpm);
 
                                 try{
-                                    fs.mkdirSync(orgPathInTwine, {recursive: true})
+                                    fs.mkdirSync(orgPathInlocalpm, {recursive: true})
                                 }catch (e) {
                                     if(e.code !== "EEXIST"){
                                         throw e;
                                     }
                                 }
-                                    await fs.promises.mkdir(orgPathInTwine).catch(e => {
+                                    await fs.promises.mkdir(orgPathInlocalpm).catch(e => {
                                         if(e.code !== "EEXIST"){
                                             throw e;
                                         }
                                     });
    
 
-                                //check for the package in twine pkgs within the given orginization. twine/pkgs/@orginization/packagename
-                                const packageInOrgPath = path.join(orgPathInTwine,ctx.packageinfo.Package);
+                                //check for the package in localpm pkgs within the given orginization. localpm/pkgs/@orginization/packagename
+                                const packageInOrgPath = path.join(orgPathInlocalpm,ctx.packageinfo.Package);
                                 if(!fs.existsSync(packageInOrgPath)){
                                     await fs.promises.mkdir(packageInOrgPath).catch(e => {
                                         if(e.code !== "EEXIST"){
@@ -137,7 +137,7 @@ export async function publishaction(packagePath:string,options:publishactionopti
                                 }
                                 
                                 
-                                //check for the package of the specific version in twine pkgs within the given orginization. twine/pkgs/@orginization/packagename/version.number.here
+                                //check for the package of the specific version in localpm pkgs within the given orginization. localpm/pkgs/@orginization/packagename/version.number.here
                                 const packageVersionInOrgPath = path.join(packageInOrgPath,ctx.packageinfo.Version);
                                 if(fs.existsSync(packageVersionInOrgPath)){
                                     //alert package with version already published
@@ -159,21 +159,21 @@ export async function publishaction(packagePath:string,options:publishactionopti
                                     }
                                 });
 
-                                //add to twine-packages.json
-                                const twinePackagesJson:TwinePackages = JSON.parse(await fs.promises.readFile(await getTwinePackageJsonPath(true),"utf8").catch(e=>{throw e}));
+                                //add to localpm-packages.json
+                                const localpmPackagesJson:localpmPackages = JSON.parse(await fs.promises.readFile(await getlocalpmPackageJsonPath(true),"utf8").catch(e=>{throw e}));
                                 const packageNameMap = ctx.packageinfo.Name;
-                                twinePackagesJson.packages[packageNameMap] = twinePackagesJson.packages[packageNameMap] || {}
-                                Object.assign(twinePackagesJson.packages[packageNameMap], {
+                                localpmPackagesJson.packages[packageNameMap] = localpmPackagesJson.packages[packageNameMap] || {}
+                                Object.assign(localpmPackagesJson.packages[packageNameMap], {
                                     [`${ctx.packageinfo.Version}`]: {
                                         //retain old installations if exists
-                                        installations: twinePackagesJson.packages[packageNameMap][ctx.packageinfo.Version] && 
-                                        twinePackagesJson.packages[packageNameMap][`${ctx.packageinfo.Version}`]["installations"]
+                                        installations: localpmPackagesJson.packages[packageNameMap][ctx.packageinfo.Version] && 
+                                        localpmPackagesJson.packages[packageNameMap][`${ctx.packageinfo.Version}`]["installations"]
                                          || [],
                                         resolve: path.join(packageVersionInOrgPath,"package"),
                                     }
                                 })
 
-                                await fs.promises.writeFile(await getTwinePackageJsonPath(),JSON.stringify(twinePackagesJson,null,2)).catch(e => {
+                                await fs.promises.writeFile(await getlocalpmPackageJsonPath(),JSON.stringify(localpmPackagesJson,null,2)).catch(e => {
                                     throw e;
                                 })
 
@@ -215,6 +215,7 @@ export default function publish(program: typeof CommanderProgram){
     .option("--overwrite", "Overwrites any existing version without asking for permission.", false)
     .option("--push", "Push changes after publishing.", false)
     .option("--noScripts", "Do not execute any scripts", false)
+    .option("--registry", "Publishes to registry aswell, will change dependencies to use ^... of the version", false)
     .description("packs and publishes package locally")
     .action(async (options) => {
         publishaction(process.cwd(),options)

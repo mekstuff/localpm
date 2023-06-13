@@ -13,7 +13,7 @@ type listStructureItem = {
 
 import { Console } from "console";
 import { Transform } from "stream";
-import { TwinePackageData, TwinePackages, getTwinePackageJsonPath } from "../misc/createHomeFolder.js";
+import { localpmPackageData, localpmPackages, getlocalpmPackageJsonPath } from "../misc/createHomeFolder.js";
 import extractPackageName from "../misc/extractPackageName.js";
 
 
@@ -38,16 +38,16 @@ function table(input) {
 export default function(program:typeof CommanderProgram){
     program.command("list")
     .argument("[targetPackage]", "list for a specific package only")
-    .option("-a, --all ", "list all packages that are published to twine and their installations")
+    .option("-a, --all ", "list all packages that are published to localpm and their installations")
     .option("--include-resolve","Add the resolve tab",false)
     .action( async (targetPackage:string | undefined, options) => {
         if(options.all){
-            const twinePackagesJson = await getTwinePackageJsonPath();
-            if(!twinePackagesJson){
-                console.log("twine package json file not found, publish a package first.")
+            const localpmPackagesJson = await getlocalpmPackageJsonPath();
+            if(!localpmPackagesJson){
+                console.log("localpm package json file not found, publish a package first.")
                 process.exit(1);
             }
-            const JSONRead:TwinePackages = JSON.parse(await fs.promises.readFile(twinePackagesJson,"utf8").catch(e=>{throw e}));
+            const JSONRead:localpmPackages = JSON.parse(await fs.promises.readFile(localpmPackagesJson,"utf8").catch(e=>{throw e}));
             const Tree = []
             for(const packageName in JSONRead.packages){
                 const extractedInfo = extractPackageName(packageName)
@@ -81,13 +81,13 @@ export default function(program:typeof CommanderProgram){
                             children.push({name: "WARN: not found node_modules",})
                         }
                         
-                        await fs.promises.readFile(path.join(installation,"twine.lock"),"utf8").then((res)=>{
+                        await fs.promises.readFile(path.join(installation,"localpm.lock"),"utf8").then((res)=>{
                             const inLock = JSON.parse(res).packages[packageName];
                             if(!inLock){
-                                children.push({name: "WARN: not found in twine.lock",})
+                                children.push({name: "WARN: not found in localpm.lock",})
                             }
                         }).catch(()=>{
-                            children.push({name: "WARN: could not read twine.lock",})
+                            children.push({name: "WARN: could not read localpm.lock",})
                         })
 
                         nestedLevel.children.push({name: useName,children: children.length > 0 && children || undefined})
@@ -100,7 +100,7 @@ export default function(program:typeof CommanderProgram){
             return
         }
         const listStructure:Array<listStructureItem> = [];
-        const lock = JSON.parse(await fs.promises.readFile(path.join(process.cwd(),"twine.lock"),"utf8").catch(e=>{
+        const lock = JSON.parse(await fs.promises.readFile(path.join(process.cwd(),"localpm.lock"),"utf8").catch(e=>{
             throw e;
         }));
         for(const x in lock.packages){

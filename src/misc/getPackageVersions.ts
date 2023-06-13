@@ -1,5 +1,5 @@
 import fs from "fs";
-import { TwinePackages, getTwinePackageJsonPath } from "./createHomeFolder.js";
+import { localpmPackages, getlocalpmPackageJsonPath } from "./createHomeFolder.js";
 
 export async function removePathFromInstallation(targetpath:string,packageName:string,version:string){
     try{ //so errors for add is ignored
@@ -9,11 +9,11 @@ export async function removePathFromInstallation(targetpath:string,packageName:s
     }
 }
 export async function addPathToInstallation(targetpath:string,packageName:string,version:string,removePath?:boolean){
-    return await getTwinePackageJsonPath().then(async (e) => {
-        const JSONRead:TwinePackages = JSON.parse(fs.readFileSync(e,"utf8"));
+    return await getlocalpmPackageJsonPath().then(async (e) => {
+        const JSONRead:localpmPackages = JSON.parse(fs.readFileSync(e,"utf8"));
         const targetPackage = JSONRead.packages[packageName];
         if(!targetPackage){
-            throw new Error(`${packageName} was not found in twine-packages.`);
+            throw new Error(`${packageName} was not found in localpm-packages.`);
         }
         const target = targetPackage[version];
         if(!target){
@@ -28,17 +28,17 @@ export async function addPathToInstallation(targetpath:string,packageName:string
             }else{
                 target.installations.push(targetpath);
             }
-            fs.promises.writeFile(await getTwinePackageJsonPath(), JSON.stringify(JSONRead,null,2)).catch(e=>{throw e});
+            fs.promises.writeFile(await getlocalpmPackageJsonPath(), JSON.stringify(JSONRead,null,2)).catch(e=>{throw e});
         }
     })
 }
 
 export async function getPackageVersionData(packageName:string,version:string){
-    return await getTwinePackageJsonPath().then(e => {
-        const JSONRead:TwinePackages = JSON.parse(fs.readFileSync(e,"utf8"));
+    return await getlocalpmPackageJsonPath().then(e => {
+        const JSONRead:localpmPackages = JSON.parse(fs.readFileSync(e,"utf8"));
         const targetPackage = JSONRead.packages[packageName];
         if(!targetPackage){
-            throw new Error(`${packageName} was not found in twine-packages.`);
+            throw new Error(`${packageName} was not found in localpm-packages.`);
         }
         const target = targetPackage[version];
         if(!target){
@@ -49,11 +49,11 @@ export async function getPackageVersionData(packageName:string,version:string){
 }
 
 export default async function getPackageVersions(packageName:string):Promise<Array<string>|undefined>{
-    return await getTwinePackageJsonPath().then(e => {
-        const JSONRead:TwinePackages = JSON.parse(fs.readFileSync(e,"utf8"));
+    return await getlocalpmPackageJsonPath().then(e => {
+        const JSONRead:localpmPackages = JSON.parse(fs.readFileSync(e,"utf8"));
         const targetPackage = JSONRead.packages[packageName];
         if(!targetPackage){
-            throw new Error(`${packageName} was not found in twine-packages.`);
+            throw new Error(`${packageName} was not found in localpm-packages.`);
         }
         return (Object.keys(targetPackage))
     });

@@ -21,8 +21,8 @@ function getPackageManagerFromPath(Path:string):string|undefined {
     if(npmlock){
         return "npm";
     }
-    const pnpmlock = fs.existsSync(path.join(Path,"pnpm-lock.json"));
-    if(npmlock){
+    const pnpmlock = fs.existsSync(path.join(Path,"pnpm-lock.yaml"));
+    if(pnpmlock){
         return "pnpm";
     }
     return undefined;
@@ -35,16 +35,16 @@ export async function updateaction(packageName:string, packagePath:string,option
             {
                 title: `Updating package "${packageName}"...`,
                 task: async (_,task) => {
-                    const LOCK_PATH = path.join(packagePath,"twine.lock")
+                    const LOCK_PATH = path.join(packagePath,"localpm.lock")
                     const obj:any = JSON.parse(fs.readFileSync(LOCK_PATH).toString())
 
                     let pkginfo = extractPackageName(packageName);
 
-                    const TwinePackageData = (obj.packages[pkginfo.Name])
-                    if(!TwinePackageData){
-                        throw new Error(`${packageName} is not managed by twine. Could not find in lock file.`);
+                    const localpmPackageData = (obj.packages[pkginfo.Name])
+                    if(!localpmPackageData){
+                        throw new Error(`${packageName} is not managed by localpm. Could not find in lock file.`);
                     }
-                    const previouspm = TwinePackageData.pm;
+                    const previouspm = localpmPackageData.pm;
                     let targetpm: string|undefined;
                     if(!options.npm && !options.yarn && !options.pnpm){
                         targetpm = getPackageManagerFromPath(packagePath);
@@ -66,10 +66,10 @@ export async function updateaction(packageName:string, packagePath:string,option
 
                     if(previouspm !== targetpm){
                         //uninstall from previous package manager
-                    }else{
+                        
                     }
-                    TwinePackageData.pm = targetpm;
-                    await fs.promises.writeFile(path.join(packagePath,"twine.lock"),JSON.stringify(obj,null,2),"utf8").catch(e=>{throw e});
+                    localpmPackageData.pm = targetpm;
+                    await fs.promises.writeFile(path.join(packagePath,"localpm.lock"),JSON.stringify(obj,null,2),"utf8").catch(e=>{throw e});
                     
                     var prefix:string;
                     if(targetpm === "yarn"){
@@ -80,7 +80,7 @@ export async function updateaction(packageName:string, packagePath:string,option
                         prefix = "pnpm install";                        
                     }
                     
-                    const execCMD = prefix+" file:"+TwinePackageData.resolve;
+                    const execCMD = prefix+" file:"+localpmPackageData.resolve;
                     await new Promise<void>((resolve,reject) => {
                         const executedCommand = exec(execCMD,{cwd: packagePath})
                         executedCommand.stderr.on("data",(data:Buffer)=>{
@@ -114,7 +114,7 @@ export async function updateaction(packageName:string, packagePath:string,option
                 //         )
                 //     }
 
-                //     const LOCK_PATH = path.join(packagePath,"twine.lock")
+                //     const LOCK_PATH = path.join(packagePath,"localpm.lock")
                 //     const obj:any = JSON.parse(fs.readFileSync(LOCK_PATH).toString())
                 //     const pkgs:Array<string> = [];
                 //     for(const n in obj.packages) {
@@ -122,7 +122,7 @@ export async function updateaction(packageName:string, packagePath:string,option
                 //         pkgs.push("file:"+d.resolve)
                 //         obj.packages[n].pm = targetpm;
                 //     }
-                //     await fs.promises.writeFile(path.join(packagePath,"twine.lock"),JSON.stringify(obj,null,2),"utf8").catch(e=>{throw e});
+                //     await fs.promises.writeFile(path.join(packagePath,"localpm.lock"),JSON.stringify(obj,null,2),"utf8").catch(e=>{throw e});
                     
                     // var prefix;
                     // if(targetpm == "yarn"){
@@ -158,6 +158,9 @@ export async function updateaction(packageName:string, packagePath:string,option
 
 export default function update(program: typeof CommanderProgram){
     program.command("update [packageName]")
+    .option("--yarn", "use yarn as the package manager", false)
+    .option("--npm", "use npm as the package manager", false)
+    .option("--pnpm", "use pnpm as the package manager", false)
     .action(async (packageName, options) => {
         if(packageName){
             updateaction(packageName,process.cwd(),options);

@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { program as CommanderProgram } from "commander";
 import { publishaction } from "./publish.js";
-import { getTwinePackageJsonPath, TwinePackages } from "../misc/createHomeFolder.js";
+import { getlocalpmPackageJsonPath, localpmPackages } from "../misc/createHomeFolder.js";
 import { Listr } from "listr2";
 import extractPackageName, { extractedPackageInfo } from "../misc/extractPackageName.js";
 import { exec } from "child_process";
@@ -50,11 +50,11 @@ export async function pushaction(packagePath:string,options?:pushactionoptions){
             {
                 title: "Pushing...",
                 task: async (ctx,task) => {
-                    const TwinePackages = await getTwinePackageJsonPath();
-                    const TwinePackagesJSON:TwinePackages = JSON.parse(await fs.promises.readFile(TwinePackages,"utf8").catch(e=>{throw e}));
+                    const localpmPackages = await getlocalpmPackageJsonPath();
+                    const localpmPackagesJSON:localpmPackages = JSON.parse(await fs.promises.readFile(localpmPackages,"utf8").catch(e=>{throw e}));
    
                     const n = ctx.packageinfo.Name;
-                    const target = TwinePackagesJSON.packages[n];
+                    const target = localpmPackagesJSON.packages[n];
                     if(target === undefined){
                         throw new Error(`Package "${n}" is not published, cannot push`);
                     }
@@ -62,7 +62,7 @@ export async function pushaction(packagePath:string,options?:pushactionoptions){
                     if(!targetVer){
                         task.skip(`Package was published but version @${ctx.packageinfo.Version} was not, cannot push. Publish new version first`);
                     }
-                    const execCmd = "twine update "+ctx.packageinfo.Name;
+                    const execCmd = "lpm update "+ctx.packageinfo.Name;
                     let index = 0;
                     targetVer.installations.map((e) => {
                         index++
@@ -79,7 +79,7 @@ export async function pushaction(packagePath:string,options?:pushactionoptions){
                                         if(exitcode === 0){
                                             // resolve()
                                              //now push changes to those dependencies dependencies
-                                            exec("twine push",{cwd: e}).on("close",()=>{
+                                            exec("localpm push",{cwd: e}).on("close",()=>{
                                                 resolve()
                                             }).stdout.on("data",(d) => {
                                                 nt.output = d.toString();

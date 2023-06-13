@@ -63,7 +63,7 @@ async function watchaction(packagePath:string, filesToWatch?:Array<string>, opti
     }
 
     function logWatching(){
-        console.log("\n\n\n\nTwine Watching: "+filesToWatch.join(", "));
+        console.log("\n\n\n\nlocalpm Watching: "+filesToWatch.join(", "));
     }
 
     const watcher = chokidar.watch(filesToWatch,{
@@ -78,7 +78,7 @@ async function watchaction(packagePath:string, filesToWatch?:Array<string>, opti
     })
     process.on('SIGINT', () => {
         watcher.close().then(()=>{
-            console.log("Twine Watch: Closed")
+            console.log("localpm Watch: Closed")
         }).catch(e=>{
             console.log(`Could not close watcher ${e}`)
         })
@@ -132,13 +132,13 @@ async function watchaction(packagePath:string, filesToWatch?:Array<string>, opti
     })
     process.on('SIGINT', () => {
         watcher.close().then(()=>{
-            console.log("Twine Watch: Closed")
+            console.log("localpm Watch: Closed")
         }).catch(e=>{
             console.log(`Could not close watcher ${e}`)
         })
     });
     function logWatching(){
-        console.log("\n\n\n\nTwine Watch: Watching "+filesToWatch.join(", "));
+        console.log("\n\n\n\nlocalpm Watch: Watching "+filesToWatch.join(", "));
     }
     watcher.on("ready", ()=>{
         logWatching();
@@ -158,13 +158,13 @@ async function watchaction(packagePath:string, filesToWatch?:Array<string>, opti
         update();
         let cmd:string;
         if(options.publish && options.push){
-            cmd = "twine publish --push --overwrite";
+            cmd = "localpm publish --push --overwrite";
         }else{
             if(options.publish){
-                cmd = "twine publish --overwrite";
+                cmd = "localpm publish --overwrite";
             }
             if(options.push){
-                cmd = "twine push";
+                cmd = "localpm push";
             }
         }
 

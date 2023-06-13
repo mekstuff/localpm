@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { exec } from "child_process";
-import { getTwineDirectory, getTwinePackageJsonPath } from "./misc/createHomeFolder.js";
+import { getlocalpmDirectory, getlocalpmPackageJsonPath } from "./misc/createHomeFolder.js";
 
 
 import { Command } from "commander";
@@ -28,11 +28,11 @@ remove(Program);
 const opencmd = Program.command("open");
 opencmd.command("folder")
 .action(()=>{
-    exec(`start "" "${getTwineDirectory()}"`)
+    exec(`start "" "${getlocalpmDirectory()}"`)
 })
 opencmd.command("json")
 .action(async ()=>{
-    exec(`start "" "${await getTwinePackageJsonPath()}"`)
+    exec(`start "" "${await getlocalpmPackageJsonPath()}"`)
 })
 
 

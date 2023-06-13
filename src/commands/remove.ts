@@ -4,14 +4,14 @@ import { Listr } from "listr2";
 import { program as CommanderProgram } from "commander";
 import extractPackageName from "../misc/extractPackageName.js";
 import { exec, execSync } from "child_process";
-import { TwinePackages, getTwinePackageJsonPath } from "../misc/createHomeFolder.js";
+import { localpmPackages, getlocalpmPackageJsonPath } from "../misc/createHomeFolder.js";
 import { removePathFromInstallation } from "../misc/getPackageVersions.js";
 
 import { extractedPackageInfo } from "../misc/extractPackageName.js";
 
 type removeactioncontext = {
     versionInLock: string,
-    pm: "yarn"|"npm"|undefined,
+    pm: "yarn"|"npm"|"pnpm",
     PackageInfo: extractedPackageInfo
 }
 
@@ -27,9 +27,9 @@ export async function removeaction(packagePath:string, packageName:string, optio
             {
                 title: "Verifying lock file",
                 task: async (ctx) => {
-                    const LOCK_PATH = path.join(packagePath,"twine.lock")
+                    const LOCK_PATH = path.join(packagePath,"localpm.lock")
                     if(!fs.existsSync(LOCK_PATH)){
-                        throw new Error(`No twine.lock file was found in packagePath ${packagePath}`)
+                        throw new Error(`No localpm.lock file was found in packagePath ${packagePath}`)
                     }
                     const info = extractPackageName(packageName);
                     
@@ -39,20 +39,20 @@ export async function removeaction(packagePath:string, packageName:string, optio
             {
                 title: "Removing from lock file",
                 task: async (ctx,task) => {
-                    const LOCK_FILE = JSON.parse(await fs.promises.readFile(path.join(packagePath,"twine.lock"),"utf8").catch(e=>{throw e}));
+                    const LOCK_FILE = JSON.parse(await fs.promises.readFile(path.join(packagePath,"localpm.lock"),"utf8").catch(e=>{throw e}));
                     const inLock = LOCK_FILE.packages[ctx.PackageInfo.Name];
                     ctx.pm = options.npm && "npm" || options.yarn && "yarn" || undefined;
                     if(inLock){
                         ctx.versionInLock = inLock.version
                     }
                     if(!inLock){
-                        task.skip(`"${ctx.PackageInfo.Name}" Package was not found in twine.lock file`);
+                        task.skip(`"${ctx.PackageInfo.Name}" Package was not found in localpm.lock file`);
                     }else{
                         if(!ctx.pm){
                             ctx.pm = inLock.pm;
                         }
                         LOCK_FILE.packages[ctx.PackageInfo.Name] = undefined;
-                        await fs.promises.writeFile(path.join(packagePath,"twine.lock"),JSON.stringify(LOCK_FILE,null,2)).catch(e=>{throw e})
+                        await fs.promises.writeFile(path.join(packagePath,"localpm.lock"),JSON.stringify(LOCK_FILE,null,2)).catch(e=>{throw e})
                     }
                 } 
             },
@@ -68,7 +68,9 @@ export async function removeaction(packagePath:string, packageName:string, optio
                             prefix = "yarn remove"
                         }else if(ctx.pm == "npm"){
                             prefix = "npm uninstall";
-                        };
+                        }else if(ctx.pm === "pnpm"){
+                            prefix = "pnpm remove";
+                        }
 
                         await new Promise<void>((resolve) => {
                             const execCMD = prefix+" "+ctx.PackageInfo.Name;
@@ -93,15 +95,15 @@ export async function removeaction(packagePath:string, packageName:string, optio
             {
                 title: "Removing from installations",
                 task: async (ctx,task) => {
-                    const TwinePackages = await getTwinePackageJsonPath();
-                    const TwinePackagesJSON:TwinePackages = JSON.parse(await fs.promises.readFile(TwinePackages,"utf8").catch(e=>{throw e}));
-                    const packageData = TwinePackagesJSON.packages[ctx.PackageInfo.Name];
+                    const localpmPackages = await getlocalpmPackageJsonPath();
+                    const localpmPackagesJSON:localpmPackages = JSON.parse(await fs.promises.readFile(localpmPackages,"utf8").catch(e=>{throw e}));
+                    const packageData = localpmPackagesJSON.packages[ctx.PackageInfo.Name];
                     
                     if(packageData === undefined){
-                        task.skip(`${ctx.PackageInfo.Name} was not found in the global twine-packages.json file`);
+                        task.skip(`${ctx.PackageInfo.Name} was not found in the global localpm-packages.json file`);
                     }
                     if(!ctx.versionInLock){
-                        task.skip(`No version of installation was found, you may need to manually remove from twine packages "${TwinePackages}". Target: "${ctx.PackageInfo.Name}". Installation Path: ${packagePath}`);
+                        task.skip(`No version of installation was found, you may need to manually remove from localpm packages "${localpmPackages}". Target: "${ctx.PackageInfo.Name}". Installation Path: ${packagePath}`);
                     }
                     removePathFromInstallation(packagePath,ctx.PackageInfo.Name,ctx.versionInLock)
                     // if(!packageData){
@@ -112,7 +114,7 @@ export async function removeaction(packagePath:string, packageName:string, optio
                     //     const index = (t.installations.indexOf(packagePath));
                     //     if(index > -1){
                     //         t.installations.splice(index,1);
-                    //         await fs.promises.writeFile(TwinePackages,JSON.stringify(TwinePackagesJSON,null,2),"utf8").catch(e=>{throw e});
+                    //         await fs.promises.writeFile(localpmPackages,JSON.stringify(localpmPackagesJSON,null,2),"utf8").catch(e=>{throw e});
                     //     }
                     // }else{
                     //     task.skip()
@@ -131,7 +133,7 @@ export async function removeaction(packagePath:string, packageName:string, optio
             // {
             //     title: "Pushing change",
             //     task: () => {
-            //         execSync(`twine push`,{cwd: packagePath})
+            //         execSync(`localpm push`,{cwd: packagePath})
             //     }
             // }
         ],

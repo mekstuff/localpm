@@ -2,13 +2,10 @@ import fs from "fs";
 
 import { program as CommanderProgram } from "commander"
 
-import { getTwinePackageJsonPath, TwinePackageData, TwinePackages } from "../misc/createHomeFolder.js";
 import extractPackageName, { extractedPackageInfo } from "../misc/extractPackageName.js";
 import { Listr } from "listr2";
 import path from "path";
 import { updateaction } from "./update.js";
-import { execSync } from "child_process";
-import { removeaction } from "./remove.js";
 import getPackageVersions, { addPathToInstallation, getPackageVersionData } from "../misc/getPackageVersions.js";
 
 type AddContext = {
@@ -40,7 +37,7 @@ async function addaction(packagePath:string, packageName:string, options:addacti
             // {
             //     title: "Removing existing",
             //     task: async () => {
-            //         execSync(`twine remove ${}`)
+            //         execSync(`localpm remove ${}`)
             //         // const exists = fs.existsSync(path.join(packagePath,"package.json"));
             //         // if(!exists){
             //         //     throw new Error(`Could not resolve package.json file in "${packagePath}"`);
@@ -57,18 +54,18 @@ async function addaction(packagePath:string, packageName:string, options:addacti
             {
                 title: `Adding ${packageName}`,
                 task: async (ctx) => {
-                    // const twinePackagesJson = await getTwinePackageJsonPath();
+                    // const localpmPackagesJson = await getlocalpmPackageJsonPath();
                     const extractedInfo = extractPackageName(packageName);
                     ctx.extractedInfo = extractedInfo;
                     const packageVersions = await getPackageVersions(extractedInfo.Name);
                     const QueryVersion = extractedInfo.Version == "latest" && packageVersions.at(-1) || extractedInfo.Version;
 
                     if(!packageVersions.find(e => e === QueryVersion)){
-                        throw new Error(`Version "${QueryVersion}" of "${extractedInfo.Name}" is not published to twine.`)
+                        throw new Error(`Version "${QueryVersion}" of "${extractedInfo.Name}" is not published to localpm.`)
                     }
 
-                    //add to twine.lock
-                    const LOCK_PATH = path.join(packagePath,"twine.lock")
+                    //add to localpm.lock
+                    const LOCK_PATH = path.join(packagePath,"localpm.lock")
                     if(!fs.existsSync(LOCK_PATH)){
                         await fs.promises.writeFile(LOCK_PATH,JSON.stringify({"packages":{}},null,2)).catch(e=>{throw e;});
                     }
@@ -84,7 +81,7 @@ async function addaction(packagePath:string, packageName:string, options:addacti
 
                     //update so package manager will install
 
-                    // execSync(`twine update ${extractedInfo.Name}`)
+                    // execSync(`localpm update ${extractedInfo.Name}`)
 
                     // const versionData = await getPackageVersionData(extractedInfo.Name,QueryVersion);
                     // console.log(versionData);
@@ -94,7 +91,7 @@ async function addaction(packagePath:string, packageName:string, options:addacti
                     //     resolve: packageData.resolve,
                     //     version: Data.Version,
                     // };
-                    // await addToTwineLock(packagePath,PackageVersionData, {
+                    // await addTolocalpmLock(packagePath,PackageVersionData, {
                     //     Orginization: TargetOrginization,
                     //     Package: Package,
                     //     Version: VersionUsed,
@@ -102,7 +99,7 @@ async function addaction(packagePath:string, packageName:string, options:addacti
 
                     // if(!PackageVersionData.installations.find(_e=> _e === packagePath)){
                     //     PackageVersionData.installations.push(packagePath);
-                    //     await fs.promises.writeFile(TwinePackages,JSON.stringify(TwinePackagesJSON,null,2)).catch(e=>{throw e});
+                    //     await fs.promises.writeFile(localpmPackages,JSON.stringify(localpmPackagesJSON,null,2)).catch(e=>{throw e});
                     // }
                     
                     // const targetVersion = packv
@@ -112,21 +109,21 @@ async function addaction(packagePath:string, packageName:string, options:addacti
                     // console.log(d);
                     // console.log(Orginization)
                     
-            //         let TargetOrginization:string //incase orginization doesn't exists, use @ for twine, but not for package.json
+            //         let TargetOrginization:string //incase orginization doesn't exists, use @ for localpm, but not for package.json
             //         if(!Orginization){
             //             TargetOrginization = "@";
             //         }
-            //         const TwinePackages = await getTwinePackageJsonPath();
+            //         const localpmPackages = await getlocalpmPackageJsonPath();
             //         const n = `${TargetOrginization}/${Package}`;
-            //         execSync(`twine remove ${n} --safe`)
-            //         const TwinePackagesJSON:TwinePackages = JSON.parse(await fs.promises.readFile(TwinePackages,"utf8").catch(e=>{throw e}));
-            //         const packageData = TwinePackagesJSON.packages[n];
+            //         execSync(`localpm remove ${n} --safe`)
+            //         const localpmPackagesJSON:localpmPackages = JSON.parse(await fs.promises.readFile(localpmPackages,"utf8").catch(e=>{throw e}));
+            //         const packageData = localpmPackagesJSON.packages[n];
             //         if(packageData === undefined){
-            //             throw new Error(`${n} is not a package that is published to twine.`)
+            //             throw new Error(`${n} is not a package that is published to localpm.`)
             //         }
             //         const [PackageVersionData,VersionUsed] = resolvePackageWithVersion(packageData,Version)
             //         if(!PackageVersionData){
-            //             throw new Error(`"${n}" version "${Version}" could not be resolved. This version may not be published to twine.`);
+            //             throw new Error(`"${n}" version "${Version}" could not be resolved. This version may not be published to localpm.`);
             //         }
             //         ctx.targetPackageData = PackageVersionData;
             //         ctx.extractedPackageInfo = {
@@ -135,7 +132,7 @@ async function addaction(packagePath:string, packageName:string, options:addacti
             //             Orginization: Orginization,
             //             TargetOrginization: Orginization,
             //         }
-            //         await addToTwineLock(packagePath,PackageVersionData, {
+            //         await addTolocalpmLock(packagePath,PackageVersionData, {
             //             Orginization: TargetOrginization,
             //             Package: Package,
             //             Version: VersionUsed,
@@ -143,7 +140,7 @@ async function addaction(packagePath:string, packageName:string, options:addacti
             //         //add to installations array
                     // if(!PackageVersionData.installations.find(_e=> _e === packagePath)){
                     //     PackageVersionData.installations.push(packagePath);
-                    //     await fs.promises.writeFile(TwinePackages,JSON.stringify(TwinePackagesJSON,null,2)).catch(e=>{throw e});
+                    //     await fs.promises.writeFile(localpmPackages,JSON.stringify(localpmPackagesJSON,null,2)).catch(e=>{throw e});
                     // }
                 }
             },

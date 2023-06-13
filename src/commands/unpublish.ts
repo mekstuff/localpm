@@ -5,7 +5,7 @@ import extractPackageName, { extractedPackageInfo } from "../misc/extractPackage
 
 import { Listr } from "listr2";
 import { program as CommanderProgram } from "commander";
-import { TwinePackages, getTwinePackageJsonPath, getTwinePkgs } from "../misc/createHomeFolder.js";
+import { localpmPackages, getlocalpmPackageJsonPath, getlocalpmPkgs } from "../misc/createHomeFolder.js";
 import { execSync } from "child_process";
 
 
@@ -67,18 +67,18 @@ export async function unpublishaction(packagePath:string,packageName:string | un
             {
                 title: "Unpublish",
                 task: async (ctx,task) => {
-                    const TwineFile = await getTwinePackageJsonPath();
-                    if(TwineFile){
-                        const d:TwinePackages = JSON.parse(await fs.promises.readFile(TwineFile,"utf8"))
+                    const localpmFile = await getlocalpmPackageJsonPath();
+                    if(localpmFile){
+                        const d:localpmPackages = JSON.parse(await fs.promises.readFile(localpmFile,"utf8"))
                         const n = ctx.packageinfo.Name
                         const p = d.packages[n];
                         if(p === undefined){
-                            task.skip(`Could not resolve in twine-packages "${n}"`)
+                            task.skip(`Could not resolve in localpm-packages "${n}"`)
                             return;
                         }
                         const v = p[ctx.packageinfo.Version]
                         if(!v){
-                            task.skip(`Could not resolve version in twine-packages "${n}" => @${ctx.packageinfo.Version}`)
+                            task.skip(`Could not resolve version in localpm-packages "${n}" => @${ctx.packageinfo.Version}`)
                             return
                         }
                         if(v.installations.length > 0){
@@ -103,7 +103,7 @@ export async function unpublishaction(packagePath:string,packageName:string | un
                         v.installations.map(e => {
                             //have installed version uninstall it.
                             console.log("Unpublish: removing from "+e)
-                            execSync(`twine remove ${n}@${ctx.packageinfo.Version}`,{cwd: e})
+                            execSync(`lpm remove ${n}@${ctx.packageinfo.Version}`,{cwd: e})
                         })
                         delete p[ctx.packageinfo.Version]
                         const _keys = Object.keys(p);
@@ -111,7 +111,7 @@ export async function unpublishaction(packagePath:string,packageName:string | un
                             //remove package if no version is published
                             delete d.packages[n];
                             //remove the folder aswell
-                            const mrv = path.join(getTwinePkgs(),ctx.packageinfo.Orginization?ctx.packageinfo.Orginization:"",ctx.packageinfo.Name);
+                            const mrv = path.join(getlocalpmPkgs(),ctx.packageinfo.Orginization?ctx.packageinfo.Orginization:"",ctx.packageinfo.Name);
                             try{
                                 fs.rmSync(mrv,{ recursive: true })
                             }catch(e) {
@@ -121,7 +121,7 @@ export async function unpublishaction(packagePath:string,packageName:string | un
                                 }
                             };
                         }
-                        await fs.promises.writeFile(TwineFile, JSON.stringify(d,null,2)).catch(e=>{
+                        await fs.promises.writeFile(localpmFile, JSON.stringify(d,null,2)).catch(e=>{
                             throw e;
                         })
                         
