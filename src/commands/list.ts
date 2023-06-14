@@ -48,7 +48,8 @@ export default function(program:typeof CommanderProgram){
                 process.exit(1);
             }
             const JSONRead:localpmPackages = JSON.parse(await fs.promises.readFile(localpmPackagesJson,"utf8").catch(e=>{throw e}));
-            const Tree = []
+            const Tree = [];
+
             for(const packageName in JSONRead.packages){
                 const extractedInfo = extractPackageName(packageName)
                 if(targetPackage !== undefined && targetPackage !== extractedInfo.Name){
@@ -58,41 +59,35 @@ export default function(program:typeof CommanderProgram){
                     "name": packageName,
                     "children": []
                 }
-                for(const packageVersion in JSONRead.packages[packageName]){
-                    const nestedLevel = {
-                        "name": packageVersion,
-                        "children": [],
-                    }
-                    for(const installation of JSONRead.packages[packageName][packageVersion].installations) {
-                        let useName = installation;
-                        const children = [];
+                for(const installation of JSONRead.packages[packageName].installations) {
+                    let useName = installation;
+                    const children = [];
 
-                        const filespackagejson = (await fs.promises.readFile(path.join(installation,"package.json"),"utf8").catch(()=>{
-                            children.push({name: "WARN: File does not contain a package.json"})
-                        }))
-                        if(filespackagejson){
-                            const filesjson = JSON.parse(filespackagejson);
-                            if(filesjson.name){
-                                useName = `${filesjson.name} => ${installation}`
-                            }
+                    const filespackagejson = (await fs.promises.readFile(path.join(installation,"package.json"),"utf8").catch(()=>{
+                        children.push({name: "WARN: File does not contain a package.json"})
+                    }))
+                    if(filespackagejson){
+                        const filesjson = JSON.parse(filespackagejson);
+                        if(filesjson.name){
+                            useName = `${filesjson.name} => ${installation}`
                         }
-                        const WITHIN_node_modules = fs.existsSync(path.join(installation,"node_modules",extractedInfo.Orginization?extractedInfo.Orginization:"",extractedInfo.Name));
-                        if(!WITHIN_node_modules){
-                            children.push({name: "WARN: not found node_modules",})
-                        }
-                        
-                        await fs.promises.readFile(path.join(installation,"localpm.lock"),"utf8").then((res)=>{
-                            const inLock = JSON.parse(res).packages[packageName];
-                            if(!inLock){
-                                children.push({name: "WARN: not found in localpm.lock",})
-                            }
-                        }).catch(()=>{
-                            children.push({name: "WARN: could not read localpm.lock",})
-                        })
-
-                        nestedLevel.children.push({name: useName,children: children.length > 0 && children || undefined})
                     }
-                    topLevel.children.push(nestedLevel);
+
+                    const WITHIN_node_modules = fs.existsSync(path.join(installation,"node_modules",extractedInfo.Orginization?extractedInfo.Orginization:"",extractedInfo.Package));
+                    if(!WITHIN_node_modules){
+                        children.push({name: "WARN: not found node_modules",})
+                    }
+                    
+                    await fs.promises.readFile(path.join(installation,"localpm.lock"),"utf8").then((res)=>{
+                        const inLock = JSON.parse(res).packages[extractedInfo.Name];
+                        if(!inLock){
+                            children.push({name: "WARN: not found in localpm.lock",})
+                        }
+                    }).catch(()=>{
+                        children.push({name: "WARN: could not read localpm.lock",})
+                    })
+
+                    topLevel.children.push({name: useName,children: children.length > 0 && children || undefined})
                 }
                 Tree.push(topLevel);
             }
@@ -107,7 +102,7 @@ export default function(program:typeof CommanderProgram){
             const data = lock.packages[x];
             const entry:listStructureItem = {
                 Package: x,
-                Version: data.version,
+                Version: "symlinked",
                 PackageManager: data.pm || "UKNOWN",
             }
             if(options.includeResolve){

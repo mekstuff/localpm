@@ -6,7 +6,7 @@ import { program as CommanderProgram } from "commander";
 import extractPackageName from "../misc/extractPackageName.js";
 import { exec } from "child_process";
 
-interface updateactionoptions {
+interface pullactionoptions {
     npm?: boolean,
     yarn?: boolean,
     pnpm?: boolean,
@@ -28,12 +28,12 @@ function getPackageManagerFromPath(Path:string):string|undefined {
     return undefined;
 }
 
-export async function updateaction(packageName:string, packagePath:string,options?:updateactionoptions){
+export async function pullaction(packageName:string, packagePath:string,options?:pullactionoptions){
     options = options || {};
     const MT = new Listr(
         [
             {
-                title: `Updating package "${packageName}"...`,
+                title: `Pulling package "${packageName}"...`,
                 task: async (_,task) => {
                     const LOCK_PATH = path.join(packagePath,"localpm.lock")
                     const obj:any = JSON.parse(fs.readFileSync(LOCK_PATH).toString())
@@ -64,23 +64,18 @@ export async function updateaction(packageName:string, packagePath:string,option
                             }
                     }
 
-                    if(previouspm !== targetpm){
-                        //uninstall from previous package manager
-                        
-                    }
                     localpmPackageData.pm = targetpm;
                     await fs.promises.writeFile(path.join(packagePath,"localpm.lock"),JSON.stringify(obj,null,2),"utf8").catch(e=>{throw e});
                     
-                    var prefix:string;
+                    let prefix:string;
                     if(targetpm === "yarn"){
-                        prefix = "yarn add"
+                        prefix = "yarn add link:"
                     }else if(targetpm === "npm"){
-                        prefix = "npm install";
+                        prefix = "npm install link:";
                     }else if(targetpm === "pnpm"){
-                        prefix = "pnpm install";                        
+                        prefix = "pnpm install link:";                        
                     }
-                    
-                    const execCMD = prefix+" file:"+localpmPackageData.resolve;
+                    const execCMD = prefix+localpmPackageData.resolve;
                     await new Promise<void>((resolve,reject) => {
                         const executedCommand = exec(execCMD,{cwd: packagePath})
                         executedCommand.stderr.on("data",(data:Buffer)=>{
@@ -94,59 +89,6 @@ export async function updateaction(packageName:string, packagePath:string,option
                         }
                     })
                 })
-
-
-                //     return new Promise<void>( async (resolve,reject) => {
-                //         let targetpm: string|undefined;
-                //         if(!options.npm && !options.yarn){
-                //         targetpm = getPackageManagerFromPath(packagePath);
-                //     }else{
-                //         targetpm = options.npm && "npm" || options.yarn && "yarn";
-                //     }
-                //     //if no package manager is defined then prompt for one.
-                //     if(!targetpm){
-                //         targetpm = await task.prompt(
-                //             {
-                //                 message: "Select a package manager",
-                //                 type: "Select",
-                //                 choices: ["yarn","npm"]
-                //             }
-                //         )
-                //     }
-
-                //     const LOCK_PATH = path.join(packagePath,"localpm.lock")
-                //     const obj:any = JSON.parse(fs.readFileSync(LOCK_PATH).toString())
-                //     const pkgs:Array<string> = [];
-                //     for(const n in obj.packages) {
-                //         const d:{resolve:string,pm?:string} = obj.packages[n];
-                //         pkgs.push("file:"+d.resolve)
-                //         obj.packages[n].pm = targetpm;
-                //     }
-                //     await fs.promises.writeFile(path.join(packagePath,"localpm.lock"),JSON.stringify(obj,null,2),"utf8").catch(e=>{throw e});
-                    
-                    // var prefix;
-                    // if(targetpm == "yarn"){
-                    //     prefix = "yarn add"
-                    // }else if(targetpm == "npm"){
-                    //     prefix = "npm install";
-                    // };
-                    
-                    // const execCMD = prefix+" "+pkgs.join(" ");
-                    
-                    // const executedCommand = exec(execCMD,{cwd: packagePath})
-                    // executedCommand.stderr.on("data",(data:Buffer)=>{
-                    //     console.log(data.toString())
-                    // })
-                    // executedCommand.on("close", (exitcode) => {
-                    //     if(exitcode === 0){
-                    //         resolve();
-                    //     }else{
-                    //         reject();
-                    //     }
-                    // })
-                    
-          
-                // })
                 }
             }
         ]
@@ -156,16 +98,16 @@ export async function updateaction(packageName:string, packagePath:string,option
     })
 }
 
-export default function update(program: typeof CommanderProgram){
-    program.command("update [packageName]")
+export default function pull(program: typeof CommanderProgram){
+    program.command("pull [packageName]")
     .option("--yarn", "use yarn as the package manager", false)
     .option("--npm", "use npm as the package manager", false)
     .option("--pnpm", "use pnpm as the package manager", false)
     .action(async (packageName, options) => {
         if(packageName){
-            updateaction(packageName,process.cwd(),options);
+            pullaction(packageName,process.cwd(),options);
         }else{
-            //loop through all packages and update them
+            //loop through all packages and pull them
         }
     })
 }

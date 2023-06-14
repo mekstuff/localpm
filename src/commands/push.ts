@@ -1,3 +1,4 @@
+/*
 import fs from "fs";
 import path from "path";
 import { program as CommanderProgram } from "commander";
@@ -117,3 +118,4 @@ export default function push(program:typeof CommanderProgram){
         pushaction(process.cwd(),options)
     })
 }
+*/

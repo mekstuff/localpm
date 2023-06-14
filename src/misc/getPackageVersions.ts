@@ -3,27 +3,22 @@ import { localpmPackages, getlocalpmPackageJsonPath } from "./createHomeFolder.j
 
 export async function removePathFromInstallation(targetpath:string,packageName:string,version:string){
     try{ //so errors for add is ignored
-        return await addPathToInstallation(targetpath,packageName,version,true); 
+        return await addPathToInstallation(targetpath,packageName,true); 
     }catch(e){
         // console.log(e);
     }
 }
-export async function addPathToInstallation(targetpath:string,packageName:string,version:string,removePath?:boolean){
+export async function addPathToInstallation(targetpath:string,packageName:string,removePath?:boolean){
     return await getlocalpmPackageJsonPath().then(async (e) => {
         const JSONRead:localpmPackages = JSON.parse(fs.readFileSync(e,"utf8"));
-        const targetPackage = JSONRead.packages[packageName];
-        if(!targetPackage){
-            throw new Error(`${packageName} was not found in localpm-packages.`);
-        }
-        const target = targetPackage[version];
+        const target = JSONRead.packages[packageName];
         if(!target){
-            throw new Error(`Version ${version} of ${packageName} is not published.`)
+            throw new Error(`${packageName} was not found in localpm-packages.`);
         }
         const exists = target.installations.find(_e=> _e === targetpath)
         if( (removePath && exists) || (!exists && !removePath) ){
             if(removePath){
                 const index = target.installations.indexOf(targetpath);
-                console.log(index);
                 target.installations.splice(index,1);
             }else{
                 target.installations.push(targetpath);

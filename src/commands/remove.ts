@@ -3,7 +3,7 @@ import path from "path";
 import { Listr } from "listr2";
 import { program as CommanderProgram } from "commander";
 import extractPackageName from "../misc/extractPackageName.js";
-import { exec, execSync } from "child_process";
+import { exec } from "child_process";
 import { localpmPackages, getlocalpmPackageJsonPath } from "../misc/createHomeFolder.js";
 import { removePathFromInstallation } from "../misc/getPackageVersions.js";
 
@@ -84,7 +84,6 @@ export async function removeaction(packagePath:string, packageName:string, optio
                                 }else{
                                     task.title = `FAILED: "`+task.title + `" - Package manager exited with code other than 0.`
                                     resolve();
-                                    // reject();
                                 }
                             })
                         })
@@ -98,44 +97,12 @@ export async function removeaction(packagePath:string, packageName:string, optio
                     const localpmPackages = await getlocalpmPackageJsonPath();
                     const localpmPackagesJSON:localpmPackages = JSON.parse(await fs.promises.readFile(localpmPackages,"utf8").catch(e=>{throw e}));
                     const packageData = localpmPackagesJSON.packages[ctx.PackageInfo.Name];
-                    
                     if(packageData === undefined){
                         task.skip(`${ctx.PackageInfo.Name} was not found in the global localpm-packages.json file`);
                     }
-                    if(!ctx.versionInLock){
-                        task.skip(`No version of installation was found, you may need to manually remove from localpm packages "${localpmPackages}". Target: "${ctx.PackageInfo.Name}". Installation Path: ${packagePath}`);
-                    }
                     removePathFromInstallation(packagePath,ctx.PackageInfo.Name,ctx.versionInLock)
-                    // if(!packageData){
-                    //     task.skip("Could not get packageData.")
-                    // }
-                    // const t = (packageData["@"+ctx.versionInLock]);
-                    // if(t){
-                    //     const index = (t.installations.indexOf(packagePath));
-                    //     if(index > -1){
-                    //         t.installations.splice(index,1);
-                    //         await fs.promises.writeFile(localpmPackages,JSON.stringify(localpmPackagesJSON,null,2),"utf8").catch(e=>{throw e});
-                    //     }
-                    // }else{
-                    //     task.skip()
-                    // }
-                    // const packageDataFromVer = packageData[n][ctx]
-                    // const installations = packageData.installations;
-                    // if(!installations){
-                    //     task.skip("No installations field");
-                    // }
-                    // console.log(installations);
-                    // const index = installations.indexOf(n);
-                    // console.log(index);
                 },
-
             },
-            // {
-            //     title: "Pushing change",
-            //     task: () => {
-            //         execSync(`localpm push`,{cwd: packagePath})
-            //     }
-            // }
         ],
         {
             exitOnError: options.safe && false || true,

@@ -1,3 +1,4 @@
+/*
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
@@ -181,7 +182,7 @@ async function watchaction(packagePath:string, filesToWatch?:Array<string>, opti
         })
         logWatching();
     })
-    */
+    *./
 }
 
 export default function watch(program:typeof CommanderProgram){
@@ -192,3 +193,4 @@ export default function watch(program:typeof CommanderProgram){
         watchaction(process.cwd(),files,options)
     })
 }
+*/

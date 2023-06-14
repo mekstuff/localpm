@@ -32,7 +32,8 @@ export interface localpmPackageData {
 }
 
 export interface localpmPackages {
-    packages: {[key: string]: {[key: string]: localpmPackageData}},
+    // packages: {[key: string]: {[key: string]: localpmPackageData}},
+    packages: {[key: string]: localpmPackageData},
     ["build-version"]: string,
 }
 

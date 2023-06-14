@@ -9,18 +9,22 @@ var Program = new Command;
 
 import add from "./commands/add.js";
 add(Program);
-import update from "./commands/update.js";
-update(Program);
+import pull from "./commands/pull.js";
+pull(Program);
 import publish from "./commands/publish.js";
 publish(Program);
 import unpublish from "./commands/unpublish.js";
 unpublish(Program);
+/*
 import push from "./commands/push.js";
 push(Program);
 import watch from "./commands/watch.js";
 watch(Program);
+*/
 import list from "./commands/list.js";
 list(Program);
+import prepare from "./commands/prepare.js";
+prepare(Program);
 import remove from "./commands/remove.js";
 remove(Program);
 

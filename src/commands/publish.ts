@@ -9,7 +9,7 @@ import { program as CommanderProgram } from "commander";
 
 import extractPackageName, { extractedPackageInfo } from "../misc/extractPackageName.js";
 import createHomeFolder, { localpmPackages, getlocalpmPackageJsonPath, getlocalpmPkgs } from "../misc/createHomeFolder.js";
-import { pushaction } from "./push.js";
+// import { pushaction } from "./push.js";
 
 interface PublishContext {
     readPackageFile: any,
@@ -19,8 +19,9 @@ interface PublishContext {
 
 interface publishactionoptions {
     noScripts?: boolean,
-    overwrite?: boolean,
-    push?: boolean,
+    // overwrite?: boolean,
+    // push?: boolean,
+    // migrate?: boolean,
 }
 
 export async function publishaction(packagePath:string,options:publishactionoptions){
@@ -50,36 +51,36 @@ export async function publishaction(packagePath:string,options:publishactionopti
                     await createHomeFolder();
                 }
             },
+            // {
+            //     title: "Running prepublishOnly scripts",
+            //     skip: options.noScripts,
+            //     task: (ctx,task) => {
+            //         const Scripts = ctx.readPackageFile["scripts"];
+            //         if(Scripts){
+            //             const prepublishOnly = Scripts["prepublishOnly"];
+            //             if(prepublishOnly){
+            //                 const res = execSync(prepublishOnly);
+            //                 task.title = task.title + " ==>> " + res.toString();
+            //             }else{
+            //                 task.skip(`No "prepublishOnly" script found`)
+            //             }
+            //         }else{
+            //             task.skip(`No scripts field in package file`)
+            //         }
+            //     }
+            // },
             {
-                title: "Running prepublishOnly scripts",
+                title: "Running lpm:prepublishOnly scripts",
                 skip: options.noScripts,
                 task: (ctx,task) => {
                     const Scripts = ctx.readPackageFile["scripts"];
                     if(Scripts){
-                        const prepublishOnly = Scripts["prepublishOnly"];
-                        if(prepublishOnly){
-                            const res = execSync(prepublishOnly);
-                            task.title = task.title + " ==>> " + res.toString();
-                        }else{
-                            task.skip(`No "prepublishOnly" script found`)
-                        }
-                    }else{
-                        task.skip(`No scripts field in package file`)
-                    }
-                }
-            },
-            {
-                title: "Running prepublishlocalpm scripts",
-                skip: options.noScripts,
-                task: (ctx,task) => {
-                    const Scripts = ctx.readPackageFile["scripts"];
-                    if(Scripts){
-                        const prepublishlocalpm = Scripts["prepublishlocalpm"];
+                        const prepublishlocalpm = Scripts["lpm:prepublishOnly"];
                         if(prepublishlocalpm){
                             const res = execSync(prepublishlocalpm);
                             task.title = task.title + " ==>> " + res.toString();
                         }else{
-                            task.skip(`No "prepublishlocalpm" script found`)
+                            task.skip(`No "lpm:prepublishOnly" script found`)
                         }
                     }else{
                         task.skip(`No scripts field in package file`)
@@ -135,44 +136,30 @@ export async function publishaction(packagePath:string,options:publishactionopti
                                         }
                                     });
                                 }
-                                
-                                
-                                //check for the package of the specific version in localpm pkgs within the given orginization. localpm/pkgs/@orginization/packagename/version.number.here
-                                const packageVersionInOrgPath = path.join(packageInOrgPath,ctx.packageinfo.Version);
-                                if(fs.existsSync(packageVersionInOrgPath)){
-                                    //alert package with version already published
-                                    if(!options.overwrite){
-                                        await task.prompt({
-                                            message: `${ctx.packageinfo.Name}@${ctx.packageinfo.Version} was already published, overwrite existing?`,
-                                            type: "Toggle",
-                                        }).then(r => {
-                                            if(r !== true){
-                                                reject(`Package was already published.`)
-                                            }
-                                        })
-                                    }
-                                    fs.rmSync(packageVersionInOrgPath,{recursive: true})
-                                }
-                                await fs.promises.mkdir(packageVersionInOrgPath).catch(e => {
+ 
+                               //We use packageInOrgPath instead of binding to a specific @version since we're using symlinks now.
+                                await fs.promises.mkdir(packageInOrgPath).catch(e => {
                                     if(e.code !== "EEXIST"){
                                         throw e;
                                     }
                                 });
 
-                                //add to localpm-packages.json
                                 const localpmPackagesJson:localpmPackages = JSON.parse(await fs.promises.readFile(await getlocalpmPackageJsonPath(true),"utf8").catch(e=>{throw e}));
                                 const packageNameMap = ctx.packageinfo.Name;
-                                localpmPackagesJson.packages[packageNameMap] = localpmPackagesJson.packages[packageNameMap] || {}
-                                Object.assign(localpmPackagesJson.packages[packageNameMap], {
-                                    [`${ctx.packageinfo.Version}`]: {
-                                        //retain old installations if exists
-                                        installations: localpmPackagesJson.packages[packageNameMap][ctx.packageinfo.Version] && 
-                                        localpmPackagesJson.packages[packageNameMap][`${ctx.packageinfo.Version}`]["installations"]
-                                         || [],
-                                        resolve: path.join(packageVersionInOrgPath,"package"),
+                                // localpmPackagesJson.packages[packageNameMap] = localpmPackagesJson.packages[packageNameMap] || {};
+                                
+                                //add to localpm-packages.json
+                                Object.assign(localpmPackagesJson.packages, {
+                                    [packageNameMap]: {
+                                        // retain old installations if exists
+                                        installations: localpmPackagesJson.packages[packageNameMap] && 
+                                        localpmPackagesJson.packages[packageNameMap]["installations"]
+                                        || [],
+                                        //We use packageInOrgPath instead of binding to a specific @version since we're using symlinks now.
+                                        resolve: path.join(packageInOrgPath,"package"),
                                     }
                                 })
-
+                            
                                 await fs.promises.writeFile(await getlocalpmPackageJsonPath(),JSON.stringify(localpmPackagesJson,null,2)).catch(e => {
                                     throw e;
                                 })
@@ -181,7 +168,8 @@ export async function publishaction(packagePath:string,options:publishactionopti
                                 tar.x(
                                     {
                                         file: path.join(temppath,pkgtgz),
-                                        cwd: packageVersionInOrgPath,
+                                        //We use packageInOrgPath instead of binding to a specific @version since we're using symlinks now.
+                                        cwd: packageInOrgPath,
                                         sync: true,
                                     }
                                 )
@@ -203,20 +191,20 @@ export async function publishaction(packagePath:string,options:publishactionopti
     )
     await MT.run().catch(e => {
         // console.log(e);
-    }).then(_ => {
-        if(options.push){
-            pushaction(packagePath,{publish: false})
-        }
+    }).then(ctx => {
+        console.log("published ", (ctx as PublishContext).packageinfo.Name);
+        // if(options.push){
+        //     pushaction(packagePath,{publish: false})
+        // }
     })
 }
 
 export default function publish(program: typeof CommanderProgram){
     program.command("publish")
-    .option("--overwrite", "Overwrites any existing version without asking for permission.", false)
-    .option("--push", "Push changes after publishing.", false)
     .option("--noScripts", "Do not execute any scripts", false)
-    .option("--registry", "Publishes to registry aswell, will change dependencies to use ^... of the version", false)
-    .description("packs and publishes package locally")
+    // .option("--overwrite", "Overwrites any existing version without asking for permission.", false)
+    // .option("--push", "Push changes after publishing.", false)
+    // .option("--migrate", "Makes other version installations migrate to this release", false)
     .action(async (options) => {
         publishaction(process.cwd(),options)
     })
