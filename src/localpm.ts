@@ -18,9 +18,9 @@ unpublish(Program);
 /*
 import push from "./commands/push.js";
 push(Program);
+*/
 import watch from "./commands/watch.js";
 watch(Program);
-*/
 import list from "./commands/list.js";
 list(Program);
 import prepare from "./commands/prepare.js";

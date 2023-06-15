@@ -1,14 +1,12 @@
-/*
+
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 
 import fs from "fs";
 import path from "path";
 import chokidar from "chokidar";
-import { exec, execSync } from "child_process";
+import { ChildProcessWithoutNullStreams, exec, execSync, spawn } from "child_process";
 import { program as CommanderProgram } from "commander";
-import { publishaction } from "./publish.js";
-import { pushaction } from "./push.js";
 
 const { prompt } = require('enquirer');
 
@@ -16,7 +14,7 @@ type watchactionoptions = {
     ignore?: Array<string>
     publish: boolean
     push: boolean
-    onTrigger: Array<string>
+    exec: Array<string>
 }
 
 async function watchaction(packagePath:string, filesToWatch?:Array<string>, options?:watchactionoptions){
@@ -71,11 +69,42 @@ async function watchaction(packagePath:string, filesToWatch?:Array<string>, opti
         ignoreInitial: true,
         ignored: options.ignore
     });
+    let last_processed_event = Date.now();
+    // let currentExecutingProcess:ChildProcessWithoutNullStreams|null
     watcher.on("all", (e,p) => {
-        if(options.onTrigger){
-            execSync(options.onTrigger.join(" "),{stdio: "inherit"})
-            logWatching();
+        // console.log("change",e,p)
+        const currtime = Date.now();
+        const diff = ((currtime - last_processed_event)/3600);
+        if(diff < 0.05){
+            //in cases where out dir is rebuilt, we don't want to run on every item that's rebuilt.
+            return;
         }
+        if(options.exec){
+            /*
+            if(currentExecutingProcess){
+                console.log("killing existing");
+                currentExecutingProcess.kill()
+                // process.kill(-currentExecutingProcess.pid);
+                currentExecutingProcess = null;
+            }
+            */
+            const executed = spawn(options.exec.join(" "), {stdio: "pipe", shell: true});
+            // currentExecutingProcess = executed;
+            executed.on("error", (e)=>{
+                console.log("error...", e);
+            })
+            /*
+            executed.on("exit",()=>{
+                currentExecutingProcess = null;
+            })
+            */
+            executed.stdout.pipe(process.stdout);
+            // e.stdout.on("data", (m)=>{console.log(m)})
+            // e.stderr.on("data", (m)=>{console.log(m)})
+            
+            // logWatching();
+        }
+        last_processed_event = currtime;
     })
     process.on('SIGINT', () => {
         watcher.close().then(()=>{
@@ -182,15 +211,14 @@ async function watchaction(packagePath:string, filesToWatch?:Array<string>, opti
         })
         logWatching();
     })
-    *./
+    */
 }
 
 export default function watch(program:typeof CommanderProgram){
     program.command("watch [files...]")
     .option("--ignore [files...]")
-    .option("--onTrigger [scriptsToExecute...]")
+    .option("--exec [scriptsToExecute...]")
     .action(async (files,options) => {
         watchaction(process.cwd(),files,options)
     })
 }
-*/
