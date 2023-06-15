@@ -1,7 +1,7 @@
 {
   "name": "@mekstuff/localpm",
   "author": "mekstuff <contact@mekstuff.com> (https://github.com/mekstuff)",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "scripts": {
     "release": "standard-version"
@@ -21,7 +21,6 @@
     "enquirer": "^2.3.6",
     "listr2": "^6.6.0",
     "rxjs": "^7.8.1",
-    "tar": "^6.1.15",
-    "tmp": "^0.2.1"
+    "tar": "^6.1.15"
   }
 }
