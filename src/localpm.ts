@@ -9,6 +9,8 @@ var Program = new Command;
 
 import add from "./commands/add.js";
 add(Program);
+import _import from "./commands/import.js";
+_import(Program);
 import pull from "./commands/pull.js";
 pull(Program);
 import publish from "./commands/publish.js";

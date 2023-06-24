@@ -51,6 +51,7 @@ export async function pullaction(packageName:string, packagePath:string,options?
                     }else{
                         targetpm = options.npm && "npm" || options.yarn && "yarn" || options.pnpm && "pnpm";
                     }
+ 
                     //if no package manager is defined then prompt for one.
                     if(!targetpm){
                         if(previouspm){
@@ -59,9 +60,15 @@ export async function pullaction(packageName:string, packagePath:string,options?
                             targetpm = await task.prompt({
                                     message: "Select a package manager",
                                     type: "Select",
-                                    choices: ["yarn","npm","pnpm"]
+                                    // choices: ["yarn","npm","pnpm"] due to npm and pnpm not supporting dependencies that are with link: protocol
+                                    choices: ["yarn"]
                                 })
                             }
+                    }
+
+                    if(targetpm && targetpm !== "yarn"){
+                        console.log("Due to npm and pnpm not supporting link: dependencies, the options were removed. Please switch to a yarn managed project.");
+                        process.exit(1);
                     }
 
                     localpmPackageData.pm = targetpm;
@@ -71,10 +78,15 @@ export async function pullaction(packageName:string, packagePath:string,options?
                     if(targetpm === "yarn"){
                         prefix = "yarn add link:"
                     }else if(targetpm === "npm"){
+                        console.log("packages can only be managed by yarn.");
+                        process.exit(1);
                         prefix = "npm install link:";
                     }else if(targetpm === "pnpm"){
+                        console.log("packages can only be managed by yarn.");
+                        process.exit(1);
                         prefix = "pnpm install link:";                        
                     }
+
                     const execCMD = prefix+localpmPackageData.resolve;
                     await new Promise<void>((resolve,reject) => {
                         const executedCommand = exec(execCMD,{cwd: packagePath})

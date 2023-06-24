@@ -1,13 +1,11 @@
 import fs from "fs";
-
-import { program as CommanderProgram } from "commander"
-
 import extractPackageName, { extractedPackageInfo } from "../misc/extractPackageName.js";
-import { Listr } from "listr2";
 import path from "path";
+import { Listr } from "listr2";
 import { addPathToInstallation } from "../misc/getPackageVersions.js";
 import { getlocalpmPackageJsonPath, localpmPackages } from "../misc/createHomeFolder.js";
 import { execSync } from "child_process";
+import { program as CommanderProgram } from "commander"
 
 type AddContext = {
     extractedInfo: extractedPackageInfo
@@ -17,7 +15,7 @@ interface addactionoptions {
     noPull?: boolean
 }
 
-async function addaction(packagePath:string, packageName:string, options:addactionoptions){
+export async function addaction(packagePath:string, packageName:string, options:addactionoptions){
     const MT = new Listr<AddContext>(
         [
             {
@@ -68,7 +66,11 @@ async function addaction(packagePath:string, packageName:string, options:addacti
 
     }).then((f)=>{
         if(!options.noPull){
-            execSync("lpm pull "+(f as unknown as AddContext).extractedInfo.Name,{cwd: packagePath, stdio: "inherit"});
+            try{
+                execSync("lpm pull "+(f as unknown as AddContext).extractedInfo.Name,{cwd: packagePath, stdio: "inherit"});
+            }catch(e){
+                console.warn("Failed to execute lpm pull ==>> ", e)
+            }
             // updateaction((f as unknown as AddContext).extractedInfo.Name, packagePath)
         }
     })

@@ -12,7 +12,8 @@ import { extractedPackageInfo } from "../misc/extractPackageName.js";
 type removeactioncontext = {
     versionInLock: string,
     pm: "yarn"|"npm"|"pnpm",
-    PackageInfo: extractedPackageInfo
+    PackageInfo: extractedPackageInfo,
+    imported: string,
 }
 
 type removeOptions = {
@@ -51,6 +52,7 @@ export async function removeaction(packagePath:string, packageName:string, optio
                         if(!ctx.pm){
                             ctx.pm = inLock.pm;
                         }
+                        ctx.imported = inLock.imported
                         LOCK_FILE.packages[ctx.PackageInfo.Name] = undefined;
                         await fs.promises.writeFile(path.join(packagePath,"localpm.lock"),JSON.stringify(LOCK_FILE,null,2)).catch(e=>{throw e})
                     }
@@ -92,6 +94,20 @@ export async function removeaction(packagePath:string, packageName:string, optio
                 } 
             },
             {
+                title: "Removing any imports",
+                task: async(ctx,task) => {
+                    if(ctx.imported){
+                        try{
+                            fs.rmSync(ctx.imported, {recursive: true})
+                        }catch(e){
+                            console.warn(`Failed to run rmSync when removing import ==>> ${e}`)
+                        }
+                    } else {
+                        task.skip();
+                    }
+                }
+            },
+            {
                 title: "Removing from installations",
                 task: async (ctx,task) => {
                     const localpmPackages = await getlocalpmPackageJsonPath();
@@ -102,7 +118,7 @@ export async function removeaction(packagePath:string, packageName:string, optio
                     }
                     removePathFromInstallation(packagePath,ctx.PackageInfo.Name,ctx.versionInLock)
                 },
-            },
+            }
         ],
         {
             exitOnError: options.safe && false || true,
