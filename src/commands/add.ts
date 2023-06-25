@@ -6,6 +6,7 @@ import { addPathToInstallation } from "../misc/getPackageVersions.js";
 import { getlocalpmPackageJsonPath, localpmPackages } from "../misc/createHomeFolder.js";
 import { execSync } from "child_process";
 import { program as CommanderProgram } from "commander"
+import { backupJson } from "../misc/backupJson.js";
 
 type AddContext = {
     extractedInfo: extractedPackageInfo
@@ -62,6 +63,7 @@ export async function addaction(packagePath:string, packageName:string, options:
             }                 
         ]
     )
+    await backupJson();
     await MT.run().catch(e=>{
 
     }).then((f)=>{
@@ -83,6 +85,5 @@ export default function add(program: typeof CommanderProgram){
         packageName.map(async (pn)=>{
             await addaction(process.cwd(),pn,options)
         })
-        console.log(packageName);
     })
 }

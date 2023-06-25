@@ -5,6 +5,7 @@ import { Listr } from "listr2";
 import { program as CommanderProgram } from "commander";
 import extractPackageName from "../misc/extractPackageName.js";
 import { exec } from "child_process";
+import { backupJson } from "../misc/backupJson.js";
 
 interface pullactionoptions {
     npm?: boolean,
@@ -105,6 +106,7 @@ export async function pullaction(packageName:string, packagePath:string,options?
             }
         ]
     )
+    await backupJson();
     await MT.run().catch(e=>{
 
     })

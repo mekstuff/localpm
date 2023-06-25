@@ -28,6 +28,7 @@ list(Program);
 import prepare from "./commands/prepare.js";
 prepare(Program);
 import remove from "./commands/remove.js";
+import { getBackupDirectory } from "./misc/backupJson.js";
 remove(Program);
 
 //open cmd
@@ -39,6 +40,10 @@ opencmd.command("folder")
 opencmd.command("json")
 .action(async ()=>{
     exec(`start "" "${await getlocalpmPackageJsonPath()}"`)
+})
+opencmd.command("backups")
+.action(async ()=>{
+    exec(`start "" "${getBackupDirectory()}"`)
 })
 
 

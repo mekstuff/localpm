@@ -4,6 +4,7 @@ import extractPackageName from "../misc/extractPackageName.js";
 import { Listr } from "listr2";
 import { program as CommanderProgram } from "commander";
 import { execSync } from "child_process";
+import { backupJson } from "../misc/backupJson.js";
 
 async function importaction(packagePath:string, packageName:string, directory: string){
     const MT = new Listr(
@@ -21,7 +22,7 @@ async function importaction(packagePath:string, packageName:string, directory: s
                 }
             },
             {
-                title: `Importing ${packageName}`,
+                title: `Importing ${packageName} (reminder: package must contain src/)`,
                 task: async (_,task) => {
                     const LOCK_PATH = path.join(packagePath,"localpm.lock")
                     const obj:any = JSON.parse(fs.readFileSync(LOCK_PATH).toString())
@@ -49,7 +50,7 @@ async function importaction(packagePath:string, packageName:string, directory: s
 
                     fs.mkdirSync(mustCreateDirectories, {recursive: true});
                     const restPath = path.join(mustCreateDirectories, pkginfo.Package);
-                    fs.symlinkSync(localpmPackageData.resolve,restPath, "dir");
+                    fs.symlinkSync(path.join(localpmPackageData.resolve,"src"),restPath, "dir"); //symlink the src. we don't care about anything else
                     localpmPackageData.imported = restPath;
                     await fs.promises.writeFile(path.join(packagePath,"localpm.lock"),JSON.stringify(obj,null,2),"utf8").catch(e=>{throw e});
 
@@ -57,6 +58,7 @@ async function importaction(packagePath:string, packageName:string, directory: s
             }                 
         ]
     )
+    await backupJson();
     await MT.run().catch(e=>{
 
     })

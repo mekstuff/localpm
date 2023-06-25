@@ -8,6 +8,7 @@ import { localpmPackages, getlocalpmPackageJsonPath } from "../misc/createHomeFo
 import { removePathFromInstallation } from "../misc/getPackageVersions.js";
 
 import { extractedPackageInfo } from "../misc/extractPackageName.js";
+import { backupJson } from "../misc/backupJson.js";
 
 type removeactioncontext = {
     versionInLock: string,
@@ -124,6 +125,7 @@ export async function removeaction(packagePath:string, packageName:string, optio
             exitOnError: options.safe && false || true,
         }
     )
+    await backupJson();
     await MT.run().catch(e=>{
         if(!options.safe){
             throw e;

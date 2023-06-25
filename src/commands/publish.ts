@@ -8,6 +8,7 @@ import { program as CommanderProgram } from "commander";
 
 import extractPackageName, { extractedPackageInfo } from "../misc/extractPackageName.js";
 import createHomeFolder, { localpmPackages, getlocalpmPackageJsonPath, getlocalpmPkgs } from "../misc/createHomeFolder.js";
+import { backupJson } from "../misc/backupJson.js";
 // import { pushaction } from "./push.js";
 
 interface PublishContext {
@@ -164,6 +165,7 @@ export async function publishaction(packagePath:string,options:publishactionopti
             }
         ]
         )
+    await backupJson();
     await MT.run().then((ctx) => {
         console.log("published", ctx.packageinfo.Name+" v"+ctx.packageinfo.Version);
     }).catch(e => {

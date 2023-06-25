@@ -6,6 +6,7 @@ import extractPackageName, { extractedPackageInfo } from "../misc/extractPackage
 import { Listr } from "listr2";
 import { program as CommanderProgram } from "commander";
 import { localpmPackages, getlocalpmPackageJsonPath } from "../misc/createHomeFolder.js";
+import { backupJson } from "../misc/backupJson.js";
 
 interface UnpublishContext {
     readPackageFile: any,
@@ -100,6 +101,7 @@ export async function unpublishaction(packagePath:string,packageName:string | un
             }
         ]
     )
+    await backupJson();
     await MT.run().catch(e => {})
 }
 
