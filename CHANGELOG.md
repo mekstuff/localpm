@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.1.4](https://github.com/mekstuff/localpm/compare/v0.1.3...v0.1.4) (2023-06-25)
+
+
+### Features
+
+* added backup function ([46a65f0](https://github.com/mekstuff/localpm/commit/46a65f0de769369d71b38d1eb3274cf90704ad19))
+* added import command ([bd71c69](https://github.com/mekstuff/localpm/commit/bd71c69fd3b0c1032981912e0d7e1c289b0a6500))
+
+
+### Bug Fixes
+
+* removed version from list command ([dc8ab23](https://github.com/mekstuff/localpm/commit/dc8ab23f7c54c3de41db96f054f51ee7b9b5c2ce))
+
 ### [0.1.3](https://github.com/mekstuff/localpm/compare/v0.1.1...v0.1.3) (2023-06-15)
 
 
