@@ -6,7 +6,7 @@ import logTree from "console-log-tree";
 
 type listStructureItem = {
     Package: string,
-    Version: string,
+    // Version: string,
     PackageManager?: string,
     Resolve?: string
 }
@@ -110,7 +110,7 @@ export default function(program:typeof CommanderProgram){
             const data = lock.packages[x];
             const entry:listStructureItem = {
                 Package: x,
-                Version: "symlinked",
+                // Version: "symlinked",
                 PackageManager: data.pm || "UKNOWN",
             }
             if(options.includeResolve){
